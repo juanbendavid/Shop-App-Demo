@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
-import 'package:frontend_parcial2/pages/home/venta_screen.dart';
+import 'package:frontend_parcial2/pages/home/home_screen.dart';
 
 class CategoriaFormScreen extends StatefulWidget {
   final Categoria? proveedor;
@@ -54,7 +54,7 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            widget.proveedor == null ? 'Nuevo Proveedor' : 'Editar Proveedor'),
+            widget.proveedor == null ? 'Nueva Categoria' : 'Editar Categoria'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -72,17 +72,17 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: idCategoriaController,
-                decoration: InputDecoration(labelText: 'ID Categoría'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el ID de categoría';
-                  }
-                  return null;
-                },
-              ),
+              // TextFormField(
+              //   controller: idCategoriaController,
+              //   decoration: InputDecoration(labelText: 'ID Categoría'),
+              //   keyboardType: TextInputType.number,
+              //   validator: (value) {
+              //     if (value == null || value.isEmpty) {
+              //       return 'Por favor ingresa el ID de categoría';
+              //     }
+              //     return null;
+              //   },
+              // ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveProveedor,

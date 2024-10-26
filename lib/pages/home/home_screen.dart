@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ventas')),
+      appBar: AppBar(title: Text(getTitle())),
       drawer: Drawer(
         child: ListView(
           children: [
@@ -163,5 +163,22 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) {
       return ProductoFormScreen();
     }));
+  }
+  
+  String getTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Categorías';
+      case 2:
+        return 'Ventas';
+      case 3:
+        return 'Productos';
+      case 4:
+        return 'Clientes';
+      default:
+        return 'Home';
+    }
   }
 }

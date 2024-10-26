@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend_parcial2/pages/home/venta_screen.dart';
+import 'package:frontend_parcial2/pages/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());

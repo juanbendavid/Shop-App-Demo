@@ -46,15 +46,6 @@ class _CategoriasListScreenState extends State<CategoriasListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Proveedores'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => showForm(),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -64,7 +55,7 @@ class _CategoriasListScreenState extends State<CategoriasListScreen> {
               decoration: InputDecoration(
                 labelText: 'Buscar por nombre',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: () {
                     setState(() {
                       filtroNombre = filtroController.text;

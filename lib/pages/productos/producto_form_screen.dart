@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
-import 'package:frontend_parcial2/pages/home/venta_screen.dart';
+import 'package:frontend_parcial2/pages/home/home_screen.dart';
 
 class ProductoFormScreen extends StatefulWidget {
   final Producto? producto;
@@ -15,33 +15,51 @@ class ProductoFormScreen extends StatefulWidget {
 class _ProductoFormScreenState extends State<ProductoFormScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController nombreController = TextEditingController();
-  TextEditingController idCategoriaController = TextEditingController();
   TextEditingController precioVentaController = TextEditingController();
   DatabaseHelper dbHelper = DatabaseHelper();
+
+  List<Categoria> categorias = [];
+  int? selectedCategoriaId;
 
   @override
   void initState() {
     super.initState();
+    _loadCategorias();
     if (widget.producto != null) {
       nombreController.text = widget.producto!.nombre;
-      idCategoriaController.text = widget.producto!.idCategoria.toString();
       precioVentaController.text = widget.producto!.precioVenta.toString();
+      selectedCategoriaId = widget.producto!.idCategoria;
     }
+  }
+
+  void _loadCategorias() async {
+    // Cargar las categorías desde la base de datos
+    var data = await dbHelper.getCategorias();
+    setState(() {
+      categorias = data;
+    });
   }
 
   void _saveProducto() async {
     if (_formKey.currentState!.validate()) {
+      if (selectedCategoriaId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor selecciona una categoría')),
+        );
+        return;
+      }
+
       if (widget.producto == null) {
         await dbHelper.insertProducto(Producto(
           nombre: nombreController.text,
-          idCategoria: int.parse(idCategoriaController.text),
+          idCategoria: selectedCategoriaId!,
           precioVenta: double.parse(precioVentaController.text),
         ));
       } else {
         await dbHelper.updateProducto(Producto(
           id: widget.producto!.id,
           nombre: nombreController.text,
-          idCategoria: int.parse(idCategoriaController.text),
+          idCategoria: selectedCategoriaId!,
           precioVenta: double.parse(precioVentaController.text),
         ));
       }
@@ -67,7 +85,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
             children: [
               TextFormField(
                 controller: nombreController,
-                decoration: InputDecoration(labelText: 'Nombre'),
+                decoration: const InputDecoration(labelText: 'Nombre'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor ingresa el nombre del producto';
@@ -75,20 +93,33 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                   return null;
                 },
               ),
-              TextFormField(
-                controller: idCategoriaController,
-                decoration: InputDecoration(labelText: 'ID Categoría'),
-                keyboardType: TextInputType.number,
+              const SizedBox(height: 20),
+              DropdownButtonFormField<int>(
+                value: selectedCategoriaId,
+                hint: const Text('Selecciona una categoría'),
+                decoration: const InputDecoration(labelText: 'Categoría'),
+                items: categorias.map((Categoria categoria) {
+                  return DropdownMenuItem<int>(
+                    value: categoria.id,
+                    child: Text(categoria.nombre),
+                  );
+                }).toList(),
+                onChanged: (int? newValue) {
+                  setState(() {
+                    selectedCategoriaId = newValue;
+                  });
+                },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el ID de categoría';
+                  if (value == null) {
+                    return 'Por favor selecciona una categoría';
                   }
                   return null;
                 },
               ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: precioVentaController,
-                decoration: InputDecoration(labelText: 'Precio de Venta'),
+                decoration: const InputDecoration(labelText: 'Precio de Venta'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -97,10 +128,10 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveProducto,
-                child: Text('Guardar'),
+                child: const Text('Guardar'),
               ),
             ],
           ),

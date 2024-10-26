@@ -49,15 +49,6 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Productos'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => showForm(),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -69,7 +60,7 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                   decoration: InputDecoration(
                     labelText: 'Buscar por nombre',
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.search),
+                      icon: const Icon(Icons.search),
                       onPressed: () {
                         setState(() {
                           filtroNombre = filtroNombreController.text;
@@ -105,7 +96,7 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                 final producto = productos[index];
                 return ListTile(
                   title: Text(producto.nombre),
-                  subtitle: Text('Categoría: ${producto.idCategoria} - Precio: \$${producto.precioVenta}'),
+                  subtitle: Text('Categoría: ${producto.idCategoria} - Precio: Gs. ${producto.precioVenta}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
