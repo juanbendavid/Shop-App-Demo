@@ -70,7 +70,8 @@ class _VentaScreenState extends State<VentaScreen> {
       cedulaController.text = cliente.cedula;
       nombreController.text = cliente.nombre;
       apellidoController.text = cliente.apellido;
-      clientesEncontrados = []; // Limpiar la lista de búsqueda después de seleccionar
+      clientesEncontrados =
+          []; // Limpiar la lista de búsqueda después de seleccionar
     });
   }
 
@@ -169,7 +170,8 @@ class _VentaScreenState extends State<VentaScreen> {
                   items: clientesEncontrados.map((cliente) {
                     return DropdownMenuItem<Cliente>(
                       value: cliente,
-                      child: Text('${cliente.cedula} - ${cliente.nombre} ${cliente.apellido}'),
+                      child: Text(
+                          '${cliente.cedula} - ${cliente.nombre} ${cliente.apellido}'),
                     );
                   }).toList(),
                   onChanged: (cliente) {
@@ -199,10 +201,11 @@ class _VentaScreenState extends State<VentaScreen> {
               onPressed: () {
                 // Aquí debes manejar la lógica para guardar la venta y el cliente
                 // Implementa la lógica de almacenamiento en la base de datos
-               _guardarVenta(); // Llamar a la función para guardar la venta
+                _guardarVenta(); // Llamar a la función para guardar la venta
                 Navigator.pop(context); // Cerrar el diálogo
                 setState(() {
-                  carrito.clear(); // Vaciar el carrito después de finalizar la orden
+                  carrito
+                      .clear(); // Vaciar el carrito después de finalizar la orden
                 });
               },
               child: const Text('Guardar Orden'),
@@ -212,8 +215,29 @@ class _VentaScreenState extends State<VentaScreen> {
       },
     );
   }
+
   // Función para finalizar la orden y guardar la venta en la base de datos
   void _guardarVenta() async {
+    // Depuración inicial del carrito
+    print('carrito length (inicial): ${carrito.length}');
+    for (var item in carrito) {
+      final producto = item.keys.first;
+      final cantidad = item[producto] ?? 0;
+      print(
+          'Producto: ${producto.nombre}, Cantidad: $cantidad, Precio: ${producto.precioVenta}');
+    }
+
+    // Verificar que el carrito no esté vacío
+    if (carrito.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El carrito no puede estar vacío')),
+      );
+      return;
+    }
+
+    // Crear una copia del carrito para el cálculo del total
+    final List<Map<Producto, int>> carritoCopia = List.from(carrito);
+
     // 1. Verificar si el cliente existe o crear uno nuevo
     String cedula = cedulaController.text;
     String nombre = nombreController.text;
@@ -225,27 +249,40 @@ class _VentaScreenState extends State<VentaScreen> {
       clienteExistente = clientes.first;
     } else {
       // Si no existe el cliente, crearlo
-      clienteExistente = Cliente(cedula: cedula, nombre: nombre, apellido: apellido);
-      clienteExistente.idCliente = await dbHelper.insertCliente(clienteExistente);
+      clienteExistente =
+          Cliente(cedula: cedula, nombre: nombre, apellido: apellido);
+      clienteExistente.idCliente =
+          await dbHelper.insertCliente(clienteExistente);
     }
 
-    // 2. Calcular el total de la venta
+    // Depuración antes de calcular el total
+    print('carrito length (antes de la suma): ${carritoCopia.length}');
+
+    // 2. Calcular el total de la venta usando la copia del carrito
     int total = 0;
-    for (var item in carrito) {
+    for (var item in carritoCopia) {
       final producto = item.keys.first;
-      final cantidad = item[producto]!;
+      final cantidad = item[producto] ?? 0;
+      print(
+          'Operación: ${producto.nombre} * $cantidad = ${producto.precioVenta * cantidad}');
       total += producto.precioVenta * cantidad;
     }
 
+    // Depuración del resultado del total
+    print('Total calculado: $total');
+
     // 3. Crear la venta
     String fechaActual = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    Venta nuevaVenta = Venta(fecha: fechaActual, idCliente: clienteExistente.idCliente!, total: total);
+    Venta nuevaVenta = Venta(
+        fecha: fechaActual,
+        idCliente: clienteExistente.idCliente!,
+        total: total);
     int idVenta = await dbHelper.insertVenta(nuevaVenta);
 
     // 4. Guardar detalles de la venta
-    for (var item in carrito) {
+    for (var item in carritoCopia) {
       final producto = item.keys.first;
-      final cantidad = item[producto]!;
+      final cantidad = item[producto] ?? 0;
       DetalleVenta detalle = DetalleVenta(
         idVenta: idVenta,
         idProducto: producto.id!,
@@ -321,7 +358,9 @@ class _VentaScreenState extends State<VentaScreen> {
                             .toLowerCase()
                             .contains(filtroNombre.toLowerCase())) ||
                     (filtroCategoria != null &&
-                        producto.idCategoria != categoriasDisponibles.indexOf(filtroCategoria!) + 1)) {
+                        producto.idCategoria !=
+                            categoriasDisponibles.indexOf(filtroCategoria!) +
+                                1)) {
                   return Container(); // Ocultar productos que no coincidan con el filtro
                 }
                 return ListTile(
@@ -334,7 +373,8 @@ class _VentaScreenState extends State<VentaScreen> {
                         icon: const Icon(Icons.remove),
                         onPressed: () {
                           if (cantidadSeleccionada > 0) {
-                            _actualizarCantidad(producto, cantidadSeleccionada - 1);
+                            _actualizarCantidad(
+                                producto, cantidadSeleccionada - 1);
                           }
                         },
                       ),
@@ -342,7 +382,8 @@ class _VentaScreenState extends State<VentaScreen> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () {
-                          _actualizarCantidad(producto, cantidadSeleccionada + 1);
+                          _actualizarCantidad(
+                              producto, cantidadSeleccionada + 1);
                         },
                       ),
                     ],
