@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/pages/consuta%20ventas/consulta_venta_screen.dart';
 import 'package:frontend_parcial2/pages/home/venta_screen.dart';
 import 'package:frontend_parcial2/pages/productos/producto_form_screen.dart';
 import 'package:frontend_parcial2/pages/productos/productos_list_screen.dart';
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     CategoriasListScreen(),
     const VentaScreen(),
     ProductosListScreen(),
-    const Center(child: Text('Clientes')),
+    const ConsultaVentaScreen(),
   ];
 
   // Cambiar la pantalla cuando se selecciona un item en la barra inferior
@@ -64,6 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return 'Agregar Categoría';
       case 3:
         return 'Agregar Producto';
+      case 2:
+        return 'Carrito';
       default:
         return 'Agregar';
     }
@@ -125,11 +128,11 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: _onPageChanged,
         children: _screens,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _currentIndex != 2 ? FloatingActionButton.extended(
         onPressed: onFloatingButtonPressed,
-        icon: const Icon(Icons.add),
-        label: Text(getFloatingButtonText()),
-      ),
+        icon: Icon(getIcon()),
+          label: Text(getFloatingButtonText()),
+        ) : null,
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
@@ -180,6 +183,15 @@ class _HomeScreenState extends State<HomeScreen> {
         return 'Clientes';
       default:
         return 'Home';
+    }
+  }
+  
+  IconData? getIcon() {
+    switch (_currentIndex) {
+      case 2:
+        return Icons.shopping_cart;
+      default:
+        return Icons.add;
     }
   }
 }

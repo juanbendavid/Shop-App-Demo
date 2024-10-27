@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
+import 'package:intl/intl.dart';
 
 class VentaScreen extends StatefulWidget {
   const VentaScreen({super.key});
@@ -16,6 +17,15 @@ class _VentaScreenState extends State<VentaScreen> {
   String? filtroCategoria; // Almacena la categoría seleccionada
   TextEditingController filtroNombreController = TextEditingController();
   DatabaseHelper dbHelper = DatabaseHelper();
+
+  // Controladores para los datos del cliente
+  TextEditingController cedulaController = TextEditingController();
+  TextEditingController nombreController = TextEditingController();
+  TextEditingController apellidoController = TextEditingController();
+
+  // Lista para mostrar clientes encontrados durante la búsqueda
+  List<Cliente> clientesEncontrados = [];
+  Cliente? clienteSeleccionado;
 
   // Lista de categorías disponibles para los chips
   final List<String> categoriasDisponibles = ['Categoría A', 'Categoría B'];
@@ -35,17 +45,55 @@ class _VentaScreenState extends State<VentaScreen> {
     });
   }
 
-  // Función para agregar un producto al carrito
-  void _agregarAlCarrito(Producto producto) {
+  // Función para buscar cliente por cédula
+  void _buscarClientePorCedula(String cedula) async {
+    var clientes = await dbHelper.getClientes(query: cedula);
+    if (clientes.isNotEmpty) {
+      var cliente = clientes.first;
+      setState(() {
+        nombreController.text = cliente.nombre;
+        apellidoController.text = cliente.apellido;
+      });
+    } else {
+      // Si no se encuentra el cliente, limpiar los campos
+      setState(() {
+        nombreController.clear();
+        apellidoController.clear();
+      });
+    }
+  }
+
+  // Función para seleccionar un cliente de la lista
+  void _seleccionarCliente(Cliente cliente) {
+    setState(() {
+      clienteSeleccionado = cliente;
+      cedulaController.text = cliente.cedula;
+      nombreController.text = cliente.nombre;
+      apellidoController.text = cliente.apellido;
+      clientesEncontrados = []; // Limpiar la lista de búsqueda después de seleccionar
+    });
+  }
+
+  // Función para agregar o actualizar la cantidad de un producto en el carrito
+  void _actualizarCantidad(Producto producto, int cantidad) {
     int index = carrito.indexWhere((item) => item.keys.first.id == producto.id);
     if (index == -1) {
-      // Producto no está en el carrito, agregarlo con cantidad inicial de 1
-      carrito.add({producto: 1});
+      // Producto no está en el carrito, agregarlo con la cantidad seleccionada
+      carrito.add({producto: cantidad});
     } else {
-      // Producto ya está en el carrito, incrementar la cantidad
-      carrito[index][producto] = carrito[index][producto]! + 1;
+      // Producto ya está en el carrito, actualizar la cantidad
+      carrito[index][producto] = cantidad;
     }
     setState(() {});
+  }
+
+  // Obtener la cantidad seleccionada de un producto
+  int _obtenerCantidad(Producto producto) {
+    int index = carrito.indexWhere((item) => item.keys.first.id == producto.id);
+    if (index != -1) {
+      return carrito[index][producto]!;
+    }
+    return 0;
   }
 
   // Función para mostrar el dialogo de resumen del carrito
@@ -100,23 +148,42 @@ class _VentaScreenState extends State<VentaScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController cedulaController = TextEditingController();
-        TextEditingController nombreController = TextEditingController();
-        TextEditingController apellidoController = TextEditingController();
-
         return AlertDialog(
           title: const Text('Finalizar Orden'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Input para cédula con búsqueda en tiempo real
               TextFormField(
                 controller: cedulaController,
                 decoration: const InputDecoration(labelText: 'Cédula'),
+                onChanged: (value) {
+                  _buscarClientePorCedula(value);
+                },
               ),
+              // Dropdown de opciones de clientes encontrados
+              if (clientesEncontrados.isNotEmpty)
+                DropdownButton<Cliente>(
+                  isExpanded: true,
+                  hint: const Text('Selecciona un cliente'),
+                  items: clientesEncontrados.map((cliente) {
+                    return DropdownMenuItem<Cliente>(
+                      value: cliente,
+                      child: Text('${cliente.cedula} - ${cliente.nombre} ${cliente.apellido}'),
+                    );
+                  }).toList(),
+                  onChanged: (cliente) {
+                    if (cliente != null) {
+                      _seleccionarCliente(cliente);
+                    }
+                  },
+                ),
+              // Input para nombre con búsqueda en tiempo real
               TextFormField(
                 controller: nombreController,
                 decoration: const InputDecoration(labelText: 'Nombre'),
               ),
+              // Input para apellido con búsqueda en tiempo real
               TextFormField(
                 controller: apellidoController,
                 decoration: const InputDecoration(labelText: 'Apellido'),
@@ -132,10 +199,8 @@ class _VentaScreenState extends State<VentaScreen> {
               onPressed: () {
                 // Aquí debes manejar la lógica para guardar la venta y el cliente
                 // Implementa la lógica de almacenamiento en la base de datos
+               _guardarVenta(); // Llamar a la función para guardar la venta
                 Navigator.pop(context); // Cerrar el diálogo
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Orden finalizada')),
-                );
                 setState(() {
                   carrito.clear(); // Vaciar el carrito después de finalizar la orden
                 });
@@ -147,10 +212,65 @@ class _VentaScreenState extends State<VentaScreen> {
       },
     );
   }
+  // Función para finalizar la orden y guardar la venta en la base de datos
+  void _guardarVenta() async {
+    // 1. Verificar si el cliente existe o crear uno nuevo
+    String cedula = cedulaController.text;
+    String nombre = nombreController.text;
+    String apellido = apellidoController.text;
+
+    Cliente? clienteExistente;
+    var clientes = await dbHelper.getClientes(query: cedula);
+    if (clientes.isNotEmpty) {
+      clienteExistente = clientes.first;
+    } else {
+      // Si no existe el cliente, crearlo
+      clienteExistente = Cliente(cedula: cedula, nombre: nombre, apellido: apellido);
+      clienteExistente.idCliente = await dbHelper.insertCliente(clienteExistente);
+    }
+
+    // 2. Calcular el total de la venta
+    int total = 0;
+    for (var item in carrito) {
+      final producto = item.keys.first;
+      final cantidad = item[producto]!;
+      total += producto.precioVenta * cantidad;
+    }
+
+    // 3. Crear la venta
+    String fechaActual = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    Venta nuevaVenta = Venta(fecha: fechaActual, idCliente: clienteExistente.idCliente!, total: total);
+    int idVenta = await dbHelper.insertVenta(nuevaVenta);
+
+    // 4. Guardar detalles de la venta
+    for (var item in carrito) {
+      final producto = item.keys.first;
+      final cantidad = item[producto]!;
+      DetalleVenta detalle = DetalleVenta(
+        idVenta: idVenta,
+        idProducto: producto.id!,
+        cantidad: cantidad,
+        precio: producto.precioVenta,
+      );
+      await dbHelper.insertDetalleVenta(detalle);
+    }
+
+    // 5. Mostrar mensaje de éxito y limpiar carrito
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Venta guardada exitosamente')),
+    );
+    setState(() {
+      carrito.clear(); // Limpiar el carrito después de guardar la venta
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _mostrarCarrito,
+        child: const Icon(Icons.shopping_cart),
+      ),
       body: Column(
         children: [
           Padding(
@@ -195,6 +315,7 @@ class _VentaScreenState extends State<VentaScreen> {
               itemCount: productosDisponibles.length,
               itemBuilder: (context, index) {
                 final producto = productosDisponibles[index];
+                int cantidadSeleccionada = _obtenerCantidad(producto);
                 if ((filtroNombre.isNotEmpty &&
                         !producto.nombre
                             .toLowerCase()
@@ -206,9 +327,25 @@ class _VentaScreenState extends State<VentaScreen> {
                 return ListTile(
                   title: Text(producto.nombre),
                   subtitle: Text('Categoría: ${producto.idCategoria}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.add_shopping_cart),
-                    onPressed: () => _agregarAlCarrito(producto),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: () {
+                          if (cantidadSeleccionada > 0) {
+                            _actualizarCantidad(producto, cantidadSeleccionada - 1);
+                          }
+                        },
+                      ),
+                      Text('$cantidadSeleccionada'),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          _actualizarCantidad(producto, cantidadSeleccionada + 1);
+                        },
+                      ),
+                    ],
                   ),
                 );
               },

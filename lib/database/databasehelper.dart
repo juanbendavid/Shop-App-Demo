@@ -34,7 +34,7 @@ class DatabaseHelper {
         )
       ''');
 
-       await db.execute('''
+      await db.execute('''
         CREATE TABLE productos (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           nombre TEXT NOT NULL,
@@ -74,20 +74,26 @@ class DatabaseHelper {
       ''');
     });
   }
-   // Función para borrar la base de datos
-   Future<void> deleteDb() async {
+
+  // Función para borrar la base de datos
+  Future<void> deleteDb() async {
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, "proveedores.db");
     await deleteDatabase(path);
-   }
+  }
 
-   // agregar categorias y productos de prueba al iniciar la app
-   Future<void> agregarDatosDePrueba() async {
+  // agregar categorias y productos de prueba al iniciar la app
+  Future<void> agregarDatosDePrueba() async {
     await insertCategoria(Categoria(nombre: 'Categoría A'));
     await insertCategoria(Categoria(nombre: 'Categoría B'));
-    await insertProducto(Producto(nombre: 'Producto 1', idCategoria: 1, precioVenta: 10));
-    await insertProducto(Producto(nombre: 'Producto 2', idCategoria: 2, precioVenta: 15));
-   }
+    await insertProducto(
+        Producto(nombre: 'Producto 1', idCategoria: 1, precioVenta: 10));
+    await insertProducto(
+        Producto(nombre: 'Producto 2', idCategoria: 2, precioVenta: 15));
+
+    await insertCliente(Cliente(cedula: '5611898', nombre: 'Juan', apellido: 'David'));
+    await insertCliente(Cliente(cedula: '7647938', nombre: 'María', apellido: 'Gómez'));
+  }
 
   // Crear una categoria
   Future<int> insertCategoria(Categoria categoria) async {
@@ -103,26 +109,28 @@ class DatabaseHelper {
       return Categoria.fromMap(maps[i]);
     });
   }
+
   // get categoria por id
   Future<Categoria> getCategoriaFromId(int id) async {
     var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query('categorias', where: 'id = ?', whereArgs: [id]);
+    List<Map<String, dynamic>> maps =
+        await dbClient.query('categorias', where: 'id = ?', whereArgs: [id]);
     return Categoria.fromMap(maps[0]);
   }
 
   // Actualizar categoria
   Future<int> updateCategoria(Categoria categoria) async {
     var dbClient = await db;
-    return await dbClient.update('categorias', categoria.toMap(), where: 'id = ?', whereArgs: [categoria.id]);
+    return await dbClient.update('categorias', categoria.toMap(),
+        where: 'id = ?', whereArgs: [categoria.id]);
   }
 
   // Eliminar categoria
   Future<int> deleteCategoria(int id) async {
     var dbClient = await db;
-    return await dbClient.delete('categorias', where: 'id = ?', whereArgs: [id]);
+    return await dbClient
+        .delete('categorias', where: 'id = ?', whereArgs: [id]);
   }
-
-
 
   // CRUD PRODUCTOS
   // Crear un producto
@@ -135,10 +143,11 @@ class DatabaseHelper {
   Future<List<Producto>> getProductos({String? filtroNombre}) async {
     var dbClient = await db;
     List<Map<String, dynamic>> maps;
-    
+
     // filtrar por nombre y categoria
     if (filtroNombre != null && filtroNombre.isNotEmpty) {
-      maps = await dbClient.query('productos', where: 'nombre LIKE ?', whereArgs: ['%$filtroNombre%']);
+      maps = await dbClient.query('productos',
+          where: 'nombre LIKE ?', whereArgs: ['%$filtroNombre%']);
     } else {
       maps = await dbClient.query('productos');
     }
@@ -146,7 +155,6 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) {
       return Producto.fromMap(maps[i]);
     });
-
   }
 
   // Actualizar producto
@@ -162,29 +170,41 @@ class DatabaseHelper {
     return await dbClient.delete('productos', where: 'id = ?', whereArgs: [id]);
   }
 
-   // CRUD para Clientes
+  // CRUD para Clientes
   // Crear un cliente
   Future<int> insertCliente(Cliente cliente) async {
     var dbClient = await db;
     return await dbClient.insert('Cliente', cliente.toMap());
   }
 
-  // Leer todos los clientes (con filtro opcional por cédula)
-  Future<List<Cliente>> getClientes({String? filtroCedula}) async {
-    var dbClient = await db;
-    List<Map<String, dynamic>> maps;
+  // Leer todos los clientes (con filtro opcional por cédula, nombre y apellido)
+Future<List<Cliente>> getClientes({String? query}) async {
+  var dbClient = await db;
+  List<Map<String, dynamic>> maps;
 
-    if (filtroCedula != null && filtroCedula.isNotEmpty) {
-      maps = await dbClient.query('Cliente',
-          where: 'cedula LIKE ?', whereArgs: ['%$filtroCedula%']);
+  if (query != null && query.isNotEmpty) {
+    // Verificar si el query es numérico (para búsqueda exacta por cédula)
+    if (RegExp(r'^[0-9]+$').hasMatch(query)) {
+      // Si el query es numérico, buscar por cédula exacta
+      maps = await dbClient.query('Cliente', where: 'cedula = ?', whereArgs: [query]);
     } else {
-      maps = await dbClient.query('Cliente');
-    }
+      // Si el query es texto, buscar primero por nombre y luego por apellido si no hay resultados
+      maps = await dbClient.query('Cliente', where: 'nombre LIKE ?', whereArgs: ['%$query%']);
 
-    return List.generate(maps.length, (i) {
-      return Cliente.fromMap(maps[i]);
-    });
+      if (maps.isEmpty) {
+        // Si no hay resultados por nombre, buscar por apellido
+        maps = await dbClient.query('Cliente', where: 'apellido LIKE ?', whereArgs: ['%$query%']);
+      }
+    }
+  } else {
+    maps = [];
   }
+
+  return List.generate(maps.length, (i) {
+    return Cliente.fromMap(maps[i]);
+  });
+}
+
 
   // Actualizar cliente
   Future<int> updateCliente(Cliente cliente) async {
@@ -196,7 +216,8 @@ class DatabaseHelper {
   // Eliminar cliente
   Future<int> deleteCliente(int idCliente) async {
     var dbClient = await db;
-    return await dbClient.delete('Cliente', where: 'idCliente = ?', whereArgs: [idCliente]);
+    return await dbClient
+        .delete('Cliente', where: 'idCliente = ?', whereArgs: [idCliente]);
   }
 
   // CRUD para Ventas
@@ -207,7 +228,8 @@ class DatabaseHelper {
   }
 
   // Leer todas las ventas (con filtros opcionales)
-  Future<List<Venta>> getVentas({String? filtroFecha, String? filtroCliente}) async {
+  Future<List<Venta>> getVentas(
+      {String? filtroFecha, String? filtroCliente}) async {
     var dbClient = await db;
     List<Map<String, dynamic>> maps;
 
@@ -221,13 +243,15 @@ class DatabaseHelper {
 
     if (filtroCliente != null && filtroCliente.isNotEmpty) {
       if (whereClause.isNotEmpty) whereClause += ' AND ';
-      whereClause += 'idCliente IN (SELECT idCliente FROM Cliente WHERE nombre LIKE ? OR apellido LIKE ?)';
+      whereClause +=
+          'idCliente IN (SELECT idCliente FROM Cliente WHERE nombre LIKE ? OR apellido LIKE ?)';
       whereArgs.add('%$filtroCliente%');
       whereArgs.add('%$filtroCliente%');
     }
 
     if (whereClause.isNotEmpty) {
-      maps = await dbClient.query('Venta', where: whereClause, whereArgs: whereArgs);
+      maps = await dbClient.query('Venta',
+          where: whereClause, whereArgs: whereArgs);
     } else {
       maps = await dbClient.query('Venta');
     }
@@ -247,7 +271,8 @@ class DatabaseHelper {
   // Eliminar venta
   Future<int> deleteVenta(int idVenta) async {
     var dbClient = await db;
-    return await dbClient.delete('Venta', where: 'idVenta = ?', whereArgs: [idVenta]);
+    return await dbClient
+        .delete('Venta', where: 'idVenta = ?', whereArgs: [idVenta]);
   }
 
   // CRUD para DetalleVenta
@@ -270,5 +295,16 @@ class DatabaseHelper {
       return DetalleVenta.fromMap(maps[i]);
     });
   }
-}
 
+  Future<Producto> getProductoFromId(int idProducto) async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> maps = await dbClient.query('productos', where: 'id = ?', whereArgs: [idProducto]);
+    return Producto.fromMap(maps[0]);
+  }
+
+  Future<Cliente> getClienteFromId(int idCliente) async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> maps = await dbClient.query('Cliente', where: 'idCliente = ?', whereArgs: [idCliente]);
+    return Cliente.fromMap(maps[0]);
+  }
+}
