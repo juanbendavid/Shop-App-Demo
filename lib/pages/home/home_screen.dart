@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/pages/home/venta_screen.dart';
 import 'package:frontend_parcial2/pages/productos/producto_form_screen.dart';
 import 'package:frontend_parcial2/pages/productos/productos_list_screen.dart';
-import 'package:frontend_parcial2/pages/proveedores/proveedores.dart';
-import 'package:frontend_parcial2/pages/proveedores/proveedores_form_screen.dart';
+import 'package:frontend_parcial2/pages/categorias/categorias.dart';
+import 'package:frontend_parcial2/pages/categorias/categorias_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int? index;
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const Center(child: Text('Home')),
     CategoriasListScreen(),
-    const Center(child: Text('Ventas')),
+    const VentaScreen(),
     ProductosListScreen(),
     const Center(child: Text('Clientes')),
   ];

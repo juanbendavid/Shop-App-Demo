@@ -14,10 +14,14 @@ class DatabaseHelper {
   Future<Database> get db async {
     if (_db != null) return _db!;
     _db = await initDb();
+    await agregarDatosDePrueba();
     return _db!;
   }
 
   Future<Database> initDb() async {
+    // primero eliminar la base de datos si existe
+    await deleteDb();
+
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'proveedores.db');
 
@@ -26,8 +30,7 @@ class DatabaseHelper {
       await db.execute('''
         CREATE TABLE categorias (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          nombre TEXT NOT NULL,
-          idCategoria INTEGER NOT NULL
+          nombre TEXT NOT NULL
         )
       ''');
 
@@ -36,7 +39,7 @@ class DatabaseHelper {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           nombre TEXT NOT NULL,
           idCategoria INTEGER NOT NULL,
-          precioVenta REAL NOT NULL
+          precioVenta INTEGER NOT NULL
         )
       ''');
 
@@ -54,7 +57,7 @@ class DatabaseHelper {
           idVenta INTEGER PRIMARY KEY AUTOINCREMENT,
           fecha TEXT NOT NULL,
           idCliente INTEGER NOT NULL,
-          total REAL NOT NULL,
+          total INTEGER NOT NULL,
           FOREIGN KEY (idCliente) REFERENCES Cliente(idCliente)
         )
       ''');
@@ -65,12 +68,26 @@ class DatabaseHelper {
           idVenta INTEGER NOT NULL,
           idProducto INTEGER NOT NULL,
           cantidad INTEGER NOT NULL,
-          precio REAL NOT NULL,
+          precio INTEGER NOT NULL,
           FOREIGN KEY (idVenta) REFERENCES Venta(idVenta)
         )
       ''');
     });
   }
+   // Función para borrar la base de datos
+   Future<void> deleteDb() async {
+    var databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, "proveedores.db");
+    await deleteDatabase(path);
+   }
+
+   // agregar categorias y productos de prueba al iniciar la app
+   Future<void> agregarDatosDePrueba() async {
+    await insertCategoria(Categoria(nombre: 'Categoría A'));
+    await insertCategoria(Categoria(nombre: 'Categoría B'));
+    await insertProducto(Producto(nombre: 'Producto 1', idCategoria: 1, precioVenta: 10));
+    await insertProducto(Producto(nombre: 'Producto 2', idCategoria: 2, precioVenta: 15));
+   }
 
   // Crear una categoria
   Future<int> insertCategoria(Categoria categoria) async {
@@ -85,6 +102,12 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) {
       return Categoria.fromMap(maps[i]);
     });
+  }
+  // get categoria por id
+  Future<Categoria> getCategoriaFromId(int id) async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> maps = await dbClient.query('categorias', where: 'id = ?', whereArgs: [id]);
+    return Categoria.fromMap(maps[0]);
   }
 
   // Actualizar categoria

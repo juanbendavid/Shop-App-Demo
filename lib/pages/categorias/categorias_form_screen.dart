@@ -15,7 +15,6 @@ class CategoriaFormScreen extends StatefulWidget {
 class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController nombreController = TextEditingController();
-  TextEditingController idCategoriaController = TextEditingController();
   DatabaseHelper dbHelper = DatabaseHelper();
 
   @override
@@ -23,7 +22,6 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
     super.initState();
     if (widget.proveedor != null) {
       nombreController.text = widget.proveedor!.nombre;
-      idCategoriaController.text = widget.proveedor!.idCategoria.toString();
     }
   }
 
@@ -32,13 +30,11 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
       if (widget.proveedor == null) {
         await dbHelper.insertCategoria(Categoria(
           nombre: nombreController.text,
-          idCategoria: int.parse(idCategoriaController.text),
         ));
       } else {
         await dbHelper.updateCategoria(Categoria(
           id: widget.proveedor!.id,
           nombre: nombreController.text,
-          idCategoria: int.parse(idCategoriaController.text),
         ));
       }
       // Navegar a la pantalla de inicio y remover la pantalla actual

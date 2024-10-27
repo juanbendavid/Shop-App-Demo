@@ -53,14 +53,14 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         await dbHelper.insertProducto(Producto(
           nombre: nombreController.text,
           idCategoria: selectedCategoriaId!,
-          precioVenta: double.parse(precioVentaController.text),
+          precioVenta: int.parse(precioVentaController.text),
         ));
       } else {
         await dbHelper.updateProducto(Producto(
           id: widget.producto!.id,
           nombre: nombreController.text,
           idCategoria: selectedCategoriaId!,
-          precioVenta: double.parse(precioVentaController.text),
+          precioVenta: int.parse(precioVentaController.text),
         ));
       }
       // Navegar a la pantalla de inicio y remover la pantalla actual

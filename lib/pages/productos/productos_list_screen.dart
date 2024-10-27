@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/funciones.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 import 'package:frontend_parcial2/pages/productos/producto_form_screen.dart';
@@ -28,6 +29,10 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
     setState(() {
       productos = data;
     });
+  }
+  Future<String> _getCategoriaFromId(int id) async {
+    var data = await dbHelper.getCategoriaFromId(id);
+    return data.nombre;
   }
 
   void showForm([Producto? producto]) {
@@ -96,7 +101,7 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                 final producto = productos[index];
                 return ListTile(
                   title: Text(producto.nombre),
-                  subtitle: Text('Categoría: ${producto.idCategoria} - Precio: Gs. ${producto.precioVenta}'),
+                  subtitle: Text('Precio: Gs. ${formatNumber(producto.precioVenta)}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
