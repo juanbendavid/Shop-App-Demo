@@ -22,7 +22,7 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
     _getProductos();
   }
 
-  void _getProductos() async {
+  void _getProductos({String? filtroNombre}) async {
     var data = await dbHelper.getProductos(
       filtroNombre: filtroNombre,
     );
@@ -74,6 +74,12 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
                       },
                     ),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      filtroNombre = value;
+                      _getProductos(filtroNombre: filtroNombre);
+                    });
+                  },
                 ),
                 // TextField(
                 //   controller: filtroCategoriaController,

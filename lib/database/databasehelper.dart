@@ -134,14 +134,23 @@ class DatabaseHelper {
     return await dbClient.insert('categorias', categoria.toMap());
   }
 
-  // Leer todas las categorias
-  Future<List<Categoria>> getCategorias() async {
-    var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query('categorias');
-    return List.generate(maps.length, (i) {
-      return Categoria.fromMap(maps[i]);
-    });
+  Future<List<Categoria>> getCategorias({String? filtroNombre}) async {
+  var dbClient = await db;
+  List<Map<String, dynamic>> maps = await dbClient.query('categorias');
+
+  // Filtrar las categorías si filtroNombre no es null y no está vacío
+  if (filtroNombre != null && filtroNombre.isNotEmpty) {
+    maps = maps.where((map) => 
+      map['nombre'].toString().toLowerCase().contains(filtroNombre.toLowerCase())
+    ).toList();
   }
+
+  // Generar la lista de categorías basada en el filtro
+  return List.generate(maps.length, (i) {
+    return Categoria.fromMap(maps[i]);
+  });
+}
+
 
   // get categoria por id
   Future<Categoria> getCategoriaFromId(int id) async {

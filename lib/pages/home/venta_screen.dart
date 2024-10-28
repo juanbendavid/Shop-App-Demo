@@ -219,6 +219,7 @@ class _VentaScreenState extends State<VentaScreen> {
 
   // Función para finalizar la orden y guardar la venta en la base de datos
   void _guardarVenta() async {
+    
     // Verificar que el carrito no esté vacío
     if (carrito.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,6 +227,7 @@ class _VentaScreenState extends State<VentaScreen> {
       );
       return;
     }
+    final carritoCopy = [...carrito];
 
     // 1. Verificar si el cliente existe o crear uno nuevo
     String cedula = cedulaController.text;
@@ -246,7 +248,7 @@ class _VentaScreenState extends State<VentaScreen> {
 
     // Calcular el total de la venta
     int total = 0;
-    for (var item in carrito) {
+    for (var item in carritoCopy) {
       final producto = item.keys.first;
       final cantidad = item[producto] ?? 0;
       total += producto.precioVenta * cantidad;
@@ -262,7 +264,7 @@ class _VentaScreenState extends State<VentaScreen> {
     int idVenta = await dbHelper.insertVenta(nuevaVenta);
 
     // Guardar detalles de la venta
-    for (var item in carrito) {
+    for (var item in carritoCopy) {
       final producto = item.keys.first;
       final cantidad = item[producto] ?? 0;
       DetalleVenta detalle = DetalleVenta(

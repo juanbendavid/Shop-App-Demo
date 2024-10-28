@@ -20,8 +20,8 @@ class _CategoriasListScreenState extends State<CategoriasListScreen> {
     _getProveedores();
   }
 
-  void _getProveedores() async {
-    var data = await dbHelper.getCategorias();
+  void _getProveedores({String? filtroNombre}) async {
+    var data = await dbHelper.getCategorias(filtroNombre: filtroNombre);
     setState(() {
       proveedores = data;
     });
@@ -59,11 +59,17 @@ class _CategoriasListScreenState extends State<CategoriasListScreen> {
                   onPressed: () {
                     setState(() {
                       filtroNombre = filtroController.text;
-                      _getProveedores();
+                      _getProveedores(filtroNombre: filtroNombre);
                     });
                   },
                 ),
               ),
+              onChanged: (value) {
+                setState(() {
+                  filtroNombre = value;
+                  _getProveedores(filtroNombre: filtroNombre);
+                });
+              },
             ),
           ),
           Expanded(

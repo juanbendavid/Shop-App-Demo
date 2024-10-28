@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Función para navegar desde el Drawer
   void _navigateFromDrawer(int index) {
     Navigator.pop(context); // Cerrar el Drawer
-    _onItemTapped(index);   // Navegar a la página seleccionada
+    _onItemTapped(index); // Navegar a la página seleccionada
   }
 
   // Determina el texto del botón flotante según la pantalla actual
@@ -85,63 +85,38 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(getTitle())),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text(
-                'Menú de Navegación',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Categorías'),
-              onTap: () => _navigateFromDrawer(1),
-            ),
-            ListTile(
-              leading: const Icon(Icons.shopping_cart),
-              title: const Text('Ventas'),
-              onTap: () => _navigateFromDrawer(2),
-            ),
-            ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text('Productos'),
-              onTap: () => _navigateFromDrawer(3),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Clientes'),
-              onTap: () => _navigateFromDrawer(4),
-            ),
-          ],
-        ),
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
         children: _screens,
       ),
-      floatingActionButton: (_currentIndex != ventasIndex && _currentIndex != consultaIndex) ? FloatingActionButton.extended(
-        onPressed: onFloatingButtonPressed,
-        icon: Icon(getIcon()),
-          label: Text(getFloatingButtonText()),
-        ) : null,
+      floatingActionButton:
+          (_currentIndex != ventasIndex && _currentIndex != consultaIndex)
+              ? FloatingActionButton.extended(
+                  onPressed: onFloatingButtonPressed,
+                  icon: Icon(getIcon()),
+                  label: Text(getFloatingButtonText()),
+                )
+              : null,
       bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: const TextStyle(color: Colors.blue),
-        unselectedLabelStyle: const TextStyle(color: Colors.grey),
-        backgroundColor: Colors.white,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        selectedLabelStyle:
+            TextStyle(color: Theme.of(context).colorScheme.primary),
+        unselectedLabelStyle:
+            TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        backgroundColor: Theme.of(context).colorScheme.background,
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Ventas'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categorías'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: 'Ventas'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.category), label: 'Categorías'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Productos'),
-          BottomNavigationBarItem(icon: Icon(Icons.monetization_on), label: 'Consulta'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.monetization_on), label: 'Consulta'),
         ],
       ),
     );
@@ -162,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return ProductoFormScreen();
     }));
   }
-  
+
   String getTitle() {
     switch (_currentIndex) {
       case ventasIndex:
@@ -177,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return 'Home';
     }
   }
-  
+
   IconData? getIcon() {
     switch (_currentIndex) {
       case ventasIndex:

@@ -19,7 +19,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
   TextEditingController precioVentaController = TextEditingController();
   DatabaseHelper dbHelper = DatabaseHelper();
 
-  List<Categoria> categorias = [];
+  List<Categoria>? categorias = [];
   int? selectedCategoriaId;
 
   @override
@@ -33,7 +33,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     }
   }
 
-  void _loadCategorias() async {
+  Future<void> _loadCategorias() async {
     // Cargar las categorías desde la base de datos
     var data = await dbHelper.getCategorias();
     setState(() {
@@ -78,7 +78,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       appBar: AppBar(
         title: Text(widget.producto == null ? 'Nuevo Producto' : 'Editar Producto'),
       ),
-      body: Padding(
+      body: categorias == null ? const Center(child: CircularProgressIndicator()) : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -99,7 +99,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 value: selectedCategoriaId,
                 hint: const Text('Selecciona una categoría'),
                 decoration: const InputDecoration(labelText: 'Categoría'),
-                items: categorias.map((Categoria categoria) {
+                items: categorias!.map((Categoria categoria) {
                   return DropdownMenuItem<int>(
                     value: categoria.id,
                     child: Text(categoria.nombre),
