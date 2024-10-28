@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/constantes.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 import 'package:frontend_parcial2/pages/home/home_screen.dart';
@@ -40,7 +41,7 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
       // Navegar a la pantalla de inicio y remover la pantalla actual
       Navigator.of(context).popUntil((route) => route.isFirst);
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) {
-        return const HomeScreen(index: 1);
+        return const HomeScreen(index: categoriasIndex);
       }));
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/funciones.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 
@@ -38,7 +39,7 @@ class ConsultaVentaDetallesScreen extends StatelessWidget {
                     final producto = snapshot.data!;
                     return ListTile(
                       title: Text(producto.nombre),
-                      subtitle: Text('Cantidad: ${detalle.cantidad}, Precio: \$${detalle.precio}'),
+                      subtitle: Text('Cantidad: ${detalle.cantidad}, Precio: Gs. ${formatNumber(detalle.precio)}'),
                     );
                   }
                   return const ListTile(

@@ -14,7 +14,7 @@ class _VentaScreenState extends State<VentaScreen> {
   List<Producto> productosDisponibles = [];
   List<Map<Producto, int>> carrito = [];
   String filtroNombre = '';
-  String? filtroCategoria; // Almacena la categoría seleccionada
+  Categoria? filtroCategoria; // Almacena la categoría seleccionada
   TextEditingController filtroNombreController = TextEditingController();
   DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -28,12 +28,13 @@ class _VentaScreenState extends State<VentaScreen> {
   Cliente? clienteSeleccionado;
 
   // Lista de categorías disponibles para los chips
-  final List<String> categoriasDisponibles = ['Categoría A', 'Categoría B'];
+  List<Categoria> categoriasDisponibles = [];
 
   @override
   void initState() {
     super.initState();
     _getProductos();
+    _getCategorias();
   }
 
   void _getProductos() async {
@@ -61,18 +62,6 @@ class _VentaScreenState extends State<VentaScreen> {
         apellidoController.clear();
       });
     }
-  }
-
-  // Función para seleccionar un cliente de la lista
-  void _seleccionarCliente(Cliente cliente) {
-    setState(() {
-      clienteSeleccionado = cliente;
-      cedulaController.text = cliente.cedula;
-      nombreController.text = cliente.nombre;
-      apellidoController.text = cliente.apellido;
-      clientesEncontrados =
-          []; // Limpiar la lista de búsqueda después de seleccionar
-    });
   }
 
   // Función para agregar o actualizar la cantidad de un producto en el carrito
@@ -141,6 +130,18 @@ class _VentaScreenState extends State<VentaScreen> {
         );
       },
     );
+  }
+
+  // Función para seleccionar un cliente de la lista
+  void _seleccionarCliente(Cliente cliente) {
+    setState(() {
+      clienteSeleccionado = cliente;
+      cedulaController.text = cliente.cedula;
+      nombreController.text = cliente.nombre;
+      apellidoController.text = cliente.apellido;
+      clientesEncontrados =
+          []; // Limpiar la lista de búsqueda después de seleccionar
+    });
   }
 
   // Función para finalizar la orden y solicitar datos del cliente
@@ -218,15 +219,6 @@ class _VentaScreenState extends State<VentaScreen> {
 
   // Función para finalizar la orden y guardar la venta en la base de datos
   void _guardarVenta() async {
-    // Depuración inicial del carrito
-    print('carrito length (inicial): ${carrito.length}');
-    for (var item in carrito) {
-      final producto = item.keys.first;
-      final cantidad = item[producto] ?? 0;
-      print(
-          'Producto: ${producto.nombre}, Cantidad: $cantidad, Precio: ${producto.precioVenta}');
-    }
-
     // Verificar que el carrito no esté vacío
     if (carrito.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -234,9 +226,6 @@ class _VentaScreenState extends State<VentaScreen> {
       );
       return;
     }
-
-    // Crear una copia del carrito para el cálculo del total
-    final List<Map<Producto, int>> carritoCopia = List.from(carrito);
 
     // 1. Verificar si el cliente existe o crear uno nuevo
     String cedula = cedulaController.text;
@@ -255,32 +244,25 @@ class _VentaScreenState extends State<VentaScreen> {
           await dbHelper.insertCliente(clienteExistente);
     }
 
-    // Depuración antes de calcular el total
-    print('carrito length (antes de la suma): ${carritoCopia.length}');
-
-    // 2. Calcular el total de la venta usando la copia del carrito
+    // Calcular el total de la venta
     int total = 0;
-    for (var item in carritoCopia) {
+    for (var item in carrito) {
       final producto = item.keys.first;
       final cantidad = item[producto] ?? 0;
-      print(
-          'Operación: ${producto.nombre} * $cantidad = ${producto.precioVenta * cantidad}');
       total += producto.precioVenta * cantidad;
     }
 
-    // Depuración del resultado del total
-    print('Total calculado: $total');
-
-    // 3. Crear la venta
+    // Crear la venta
     String fechaActual = DateFormat('yyyy-MM-dd').format(DateTime.now());
     Venta nuevaVenta = Venta(
-        fecha: fechaActual,
-        idCliente: clienteExistente.idCliente!,
-        total: total);
+      fecha: fechaActual,
+      idCliente: clienteExistente.idCliente!,
+      total: total,
+    );
     int idVenta = await dbHelper.insertVenta(nuevaVenta);
 
-    // 4. Guardar detalles de la venta
-    for (var item in carritoCopia) {
+    // Guardar detalles de la venta
+    for (var item in carrito) {
       final producto = item.keys.first;
       final cantidad = item[producto] ?? 0;
       DetalleVenta detalle = DetalleVenta(
@@ -292,12 +274,20 @@ class _VentaScreenState extends State<VentaScreen> {
       await dbHelper.insertDetalleVenta(detalle);
     }
 
-    // 5. Mostrar mensaje de éxito y limpiar carrito
+    // Mostrar mensaje de éxito y limpiar carrito
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Venta guardada exitosamente')),
     );
     setState(() {
       carrito.clear(); // Limpiar el carrito después de guardar la venta
+    });
+  }
+
+  // Cargar categorías disponibles desde la base de datos
+  void _getCategorias() async {
+    var data = await dbHelper.getCategorias();
+    setState(() {
+      categoriasDisponibles = data;
     });
   }
 
@@ -330,19 +320,22 @@ class _VentaScreenState extends State<VentaScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8.0,
-                  children: categoriasDisponibles.map((categoria) {
-                    return ChoiceChip(
-                      label: Text(categoria),
-                      selected: filtroCategoria == categoria,
-                      onSelected: (bool selected) {
-                        setState(() {
-                          filtroCategoria = selected ? categoria : null;
-                        });
-                      },
-                    );
-                  }).toList(),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Wrap(
+                    spacing: 8.0,
+                    children: categoriasDisponibles.map((categoria) {
+                      return ChoiceChip(
+                        label: Text(categoria.nombre),
+                        selected: filtroCategoria == categoria,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            filtroCategoria = selected ? categoria : null;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
                 ),
               ],
             ),
@@ -358,9 +351,7 @@ class _VentaScreenState extends State<VentaScreen> {
                             .toLowerCase()
                             .contains(filtroNombre.toLowerCase())) ||
                     (filtroCategoria != null &&
-                        producto.idCategoria !=
-                            categoriasDisponibles.indexOf(filtroCategoria!) +
-                                1)) {
+                        producto.idCategoria != filtroCategoria!.id)) {
                   return Container(); // Ocultar productos que no coincidan con el filtro
                 }
                 return ListTile(

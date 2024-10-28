@@ -14,13 +14,12 @@ class DatabaseHelper {
   Future<Database> get db async {
     if (_db != null) return _db!;
     _db = await initDb();
-    await agregarDatosDePrueba();
     return _db!;
   }
 
   Future<Database> initDb() async {
     // primero eliminar la base de datos si existe
-    await deleteDb();
+    // await deleteDb();
 
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'proveedores.db');
@@ -84,15 +83,49 @@ class DatabaseHelper {
 
   // agregar categorias y productos de prueba al iniciar la app
   Future<void> agregarDatosDePrueba() async {
-    await insertCategoria(Categoria(nombre: 'Categoría A'));
-    await insertCategoria(Categoria(nombre: 'Categoría B'));
-    await insertProducto(
-        Producto(nombre: 'Producto 1', idCategoria: 1, precioVenta: 10));
-    await insertProducto(
-        Producto(nombre: 'Producto 2', idCategoria: 2, precioVenta: 15));
+    var categoriasExistentes = await getCategorias();
+    var clientesExistentes = await getClientes();
 
-    await insertCliente(Cliente(cedula: '5611898', nombre: 'Juan', apellido: 'David'));
-    await insertCliente(Cliente(cedula: '7647938', nombre: 'María', apellido: 'Gómez'));
+    // Verificar si ya existen categorías de prueba antes de insertarlas
+    if (categoriasExistentes.isEmpty) {
+      await insertCategoria(Categoria(nombre: 'Smartphones'));
+      await insertCategoria(Categoria(nombre: 'Laptops'));
+      await insertCategoria(Categoria(nombre: 'Accesorios'));
+      await insertCategoria(Categoria(nombre: 'Tablets'));
+      await insertCategoria(Categoria(nombre: 'Smartwatches'));
+      await insertCategoria(Categoria(nombre: 'Monitores'));
+    }
+
+    // Verificar si ya existen productos de prueba antes de insertarlos
+    var productosExistentes = await getProductos();
+    if (productosExistentes.isEmpty) {
+      await insertProducto(Producto(
+          nombre: 'Computadora', idCategoria: 2, precioVenta: 15000000));
+      await insertProducto(Producto(
+          nombre: 'Iphone 16 Pro Max', idCategoria: 1, precioVenta: 8000000));
+      await insertProducto(Producto(
+          nombre: 'Samsung S23 Ultra', idCategoria: 1, precioVenta: 7000000));
+      await insertProducto(Producto(
+          nombre: 'Samsung Tab S9', idCategoria: 4, precioVenta: 3000000));
+      await insertProducto(Producto(
+          nombre: 'Apple Watch Series 9',
+          idCategoria: 3,
+          precioVenta: 1500000));
+      await insertProducto(Producto(
+          nombre: 'Samsung Buds 2', idCategoria: 3, precioVenta: 1000000));
+      await insertProducto(Producto(
+          nombre: 'Monitor Samsung', idCategoria: 6, precioVenta: 1000000));
+    }
+
+    // Verificar si ya existen clientes de prueba antes de insertarlos
+    if (clientesExistentes.isEmpty) {
+      await insertCliente(
+          Cliente(cedula: '5611898', nombre: 'Juan', apellido: 'David'));
+      await insertCliente(
+          Cliente(cedula: '5738080', nombre: 'Fabrizio', apellido: 'Román'));
+      await insertCliente(
+          Cliente(cedula: '5425495', nombre: 'Esteban', apellido: 'Fernandez'));
+    }
   }
 
   // Crear una categoria
@@ -178,33 +211,35 @@ class DatabaseHelper {
   }
 
   // Leer todos los clientes (con filtro opcional por cédula, nombre y apellido)
-Future<List<Cliente>> getClientes({String? query}) async {
-  var dbClient = await db;
-  List<Map<String, dynamic>> maps;
+  Future<List<Cliente>> getClientes({String? query}) async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> maps;
 
-  if (query != null && query.isNotEmpty) {
-    // Verificar si el query es numérico (para búsqueda exacta por cédula)
-    if (RegExp(r'^[0-9]+$').hasMatch(query)) {
-      // Si el query es numérico, buscar por cédula exacta
-      maps = await dbClient.query('Cliente', where: 'cedula = ?', whereArgs: [query]);
-    } else {
-      // Si el query es texto, buscar primero por nombre y luego por apellido si no hay resultados
-      maps = await dbClient.query('Cliente', where: 'nombre LIKE ?', whereArgs: ['%$query%']);
+    if (query != null && query.isNotEmpty) {
+      // Verificar si el query es numérico (para búsqueda exacta por cédula)
+      if (RegExp(r'^[0-9]+$').hasMatch(query)) {
+        // Si el query es numérico, buscar por cédula exacta
+        maps = await dbClient
+            .query('Cliente', where: 'cedula = ?', whereArgs: [query]);
+      } else {
+        // Si el query es texto, buscar primero por nombre y luego por apellido si no hay resultados
+        maps = await dbClient
+            .query('Cliente', where: 'nombre LIKE ?', whereArgs: ['%$query%']);
 
-      if (maps.isEmpty) {
-        // Si no hay resultados por nombre, buscar por apellido
-        maps = await dbClient.query('Cliente', where: 'apellido LIKE ?', whereArgs: ['%$query%']);
+        if (maps.isEmpty) {
+          // Si no hay resultados por nombre, buscar por apellido
+          maps = await dbClient.query('Cliente',
+              where: 'apellido LIKE ?', whereArgs: ['%$query%']);
+        }
       }
+    } else {
+      maps = [];
     }
-  } else {
-    maps = [];
+
+    return List.generate(maps.length, (i) {
+      return Cliente.fromMap(maps[i]);
+    });
   }
-
-  return List.generate(maps.length, (i) {
-    return Cliente.fromMap(maps[i]);
-  });
-}
-
 
   // Actualizar cliente
   Future<int> updateCliente(Cliente cliente) async {
@@ -227,7 +262,7 @@ Future<List<Cliente>> getClientes({String? query}) async {
     return await dbClient.insert('Venta', venta.toMap());
   }
 
-  // Leer todas las ventas (con filtros opcionales)
+// Leer todas las ventas (con filtros opcionales)
   Future<List<Venta>> getVentas(
       {String? filtroFecha, String? filtroCliente}) async {
     var dbClient = await db;
@@ -236,17 +271,28 @@ Future<List<Cliente>> getClientes({String? query}) async {
     String whereClause = '';
     List<dynamic> whereArgs = [];
 
-    if (filtroFecha != null && filtroFecha.isNotEmpty) {
-      whereClause += 'fecha LIKE ?';
-      whereArgs.add('%$filtroFecha%');
+    // Verificar si el filtro es numérico para buscar solo por cédula
+    if (filtroCliente != null && filtroCliente.isNotEmpty) {
+      if (RegExp(r'^[0-9]+$').hasMatch(filtroCliente)) {
+        // Si el filtro es un número, buscar por cédula exacta
+        if (whereClause.isNotEmpty) whereClause += ' AND ';
+        whereClause +=
+            'idCliente IN (SELECT idCliente FROM Cliente WHERE cedula = ?)';
+        whereArgs.add(filtroCliente);
+      } else {
+        // Si no es numérico, buscar por nombre o apellido
+        if (whereClause.isNotEmpty) whereClause += ' AND ';
+        whereClause +=
+            'idCliente IN (SELECT idCliente FROM Cliente WHERE nombre LIKE ? OR apellido LIKE ?)';
+        whereArgs.add('%$filtroCliente%');
+        whereArgs.add('%$filtroCliente%');
+      }
     }
 
-    if (filtroCliente != null && filtroCliente.isNotEmpty) {
+    if (filtroFecha != null && filtroFecha.isNotEmpty) {
       if (whereClause.isNotEmpty) whereClause += ' AND ';
-      whereClause +=
-          'idCliente IN (SELECT idCliente FROM Cliente WHERE nombre LIKE ? OR apellido LIKE ?)';
-      whereArgs.add('%$filtroCliente%');
-      whereArgs.add('%$filtroCliente%');
+      whereClause += 'fecha = ?';
+      whereArgs.add(filtroFecha);
     }
 
     if (whereClause.isNotEmpty) {
@@ -298,13 +344,15 @@ Future<List<Cliente>> getClientes({String? query}) async {
 
   Future<Producto> getProductoFromId(int idProducto) async {
     var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query('productos', where: 'id = ?', whereArgs: [idProducto]);
+    List<Map<String, dynamic>> maps = await dbClient
+        .query('productos', where: 'id = ?', whereArgs: [idProducto]);
     return Producto.fromMap(maps[0]);
   }
 
   Future<Cliente> getClienteFromId(int idCliente) async {
     var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query('Cliente', where: 'idCliente = ?', whereArgs: [idCliente]);
+    List<Map<String, dynamic>> maps = await dbClient
+        .query('Cliente', where: 'idCliente = ?', whereArgs: [idCliente]);
     return Cliente.fromMap(maps[0]);
   }
 }

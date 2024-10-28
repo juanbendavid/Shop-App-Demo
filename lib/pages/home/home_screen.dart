@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/constantes.dart';
 import 'package:frontend_parcial2/pages/consuta%20ventas/consulta_venta_screen.dart';
 import 'package:frontend_parcial2/pages/home/venta_screen.dart';
 import 'package:frontend_parcial2/pages/productos/producto_form_screen.dart';
@@ -20,9 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Lista de las pantallas para cada pestaña
   final List<Widget> _screens = [
-    const Center(child: Text('Home')),
-    CategoriasListScreen(),
     const VentaScreen(),
+    CategoriasListScreen(),
     ProductosListScreen(),
     const ConsultaVentaScreen(),
   ];
@@ -61,11 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // Determina el texto del botón flotante según la pantalla actual
   String getFloatingButtonText() {
     switch (_currentIndex) {
-      case 1:
+      case categoriasIndex:
         return 'Agregar Categoría';
-      case 3:
+      case productosIndex:
         return 'Agregar Producto';
-      case 2:
+      case ventasIndex:
         return 'Carrito';
       default:
         return 'Agregar';
@@ -74,9 +74,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Determina la acción del botón flotante según la pantalla actual
   void onFloatingButtonPressed() {
-    if (_currentIndex == 1) {
+    if (_currentIndex == categoriasIndex) {
       showFormCategoria();
-    } else if (_currentIndex == 3) {
+    } else if (_currentIndex == productosIndex) {
       showFormProducto();
     }
   }
@@ -94,11 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Menú de Navegación',
                 style: TextStyle(color: Colors.white, fontSize: 24),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () => _navigateFromDrawer(0),
             ),
             ListTile(
               leading: const Icon(Icons.category),
@@ -128,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: _onPageChanged,
         children: _screens,
       ),
-      floatingActionButton: _currentIndex != 2 ? FloatingActionButton.extended(
+      floatingActionButton: (_currentIndex != ventasIndex && _currentIndex != consultaIndex) ? FloatingActionButton.extended(
         onPressed: onFloatingButtonPressed,
         icon: Icon(getIcon()),
           label: Text(getFloatingButtonText()),
@@ -143,11 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categorías'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Ventas'),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categorías'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Productos'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Clientes'),
+          BottomNavigationBarItem(icon: Icon(Icons.monetization_on), label: 'Consulta'),
         ],
       ),
     );
@@ -171,16 +165,14 @@ class _HomeScreenState extends State<HomeScreen> {
   
   String getTitle() {
     switch (_currentIndex) {
-      case 0:
-        return 'Home';
-      case 1:
-        return 'Categorías';
-      case 2:
+      case ventasIndex:
         return 'Ventas';
-      case 3:
+      case categoriasIndex:
+        return 'Categorías';
+      case productosIndex:
         return 'Productos';
-      case 4:
-        return 'Clientes';
+      case consultaIndex:
+        return 'Consultas';
       default:
         return 'Home';
     }
@@ -188,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   IconData? getIcon() {
     switch (_currentIndex) {
-      case 2:
+      case ventasIndex:
         return Icons.shopping_cart;
       default:
         return Icons.add;
