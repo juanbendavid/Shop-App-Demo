@@ -1,14 +1,16 @@
 class Categoria {
   int? id;
   String nombre;
+  String icono;
 
-  Categoria({this.id, required this.nombre});
+  Categoria({this.id, required this.nombre, this.icono = ''});
 
   // Convertir a Map para operaciones CRUD
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'nombre': nombre,
+      'icono': icono,
     };
   }
 
@@ -17,6 +19,7 @@ class Categoria {
     return Categoria(
       id: map['id'],
       nombre: map['nombre'],
+      icono: map['icono'],
     );
   }
 }
@@ -26,8 +29,9 @@ class Producto {
   String nombre;
   int idCategoria;
   int precioVenta;
+  String imagen;
 
-  Producto({this.id, required this.nombre, required this.idCategoria, required this.precioVenta});
+  Producto({this.id, required this.nombre, required this.idCategoria, required this.precioVenta, this.imagen = ''});
 
   // Convertir a Map para operaciones CRUD
   Map<String, dynamic> toMap() {
@@ -36,6 +40,7 @@ class Producto {
       'nombre': nombre,
       'idCategoria': idCategoria,
       'precioVenta': precioVenta,
+      'imagen': imagen,
     };
   }
 
@@ -46,6 +51,7 @@ class Producto {
       nombre: map['nombre'],
       idCategoria: map['idCategoria'],
       precioVenta: map['precioVenta'],
+      imagen: map['imagen']
     );
   }
 }

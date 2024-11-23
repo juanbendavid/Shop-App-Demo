@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_parcial2/config/constantes.dart';
+import 'package:frontend_parcial2/config/icons_mapping.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 import 'package:frontend_parcial2/pages/home/home_screen.dart';
@@ -16,6 +17,7 @@ class CategoriaFormScreen extends StatefulWidget {
 class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController nombreController = TextEditingController();
+  String? selectedIconName; // Para almacenar el nombre del ícono seleccionado
   DatabaseHelper dbHelper = DatabaseHelper();
 
   @override
@@ -23,22 +25,32 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
     super.initState();
     if (widget.proveedor != null) {
       nombreController.text = widget.proveedor!.nombre;
+      selectedIconName = widget.proveedor!.icono;
     }
   }
 
   void _saveProveedor() async {
     if (_formKey.currentState!.validate()) {
+      if (selectedIconName == null || selectedIconName!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Por favor selecciona un ícono')),
+        );
+        return;
+      }
+
       if (widget.proveedor == null) {
         await dbHelper.insertCategoria(Categoria(
           nombre: nombreController.text,
+          icono: selectedIconName!,
         ));
       } else {
         await dbHelper.updateCategoria(Categoria(
           id: widget.proveedor!.id,
           nombre: nombreController.text,
+          icono: selectedIconName!,
         ));
       }
-      // Navegar a la pantalla de inicio y remover la pantalla actual
+
       Navigator.of(context).popUntil((route) => route.isFirst);
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) {
         return const HomeScreen(index: categoriasIndex);
@@ -69,17 +81,28 @@ class _CategoriaFormScreenState extends State<CategoriaFormScreen> {
                   return null;
                 },
               ),
-              // TextFormField(
-              //   controller: idCategoriaController,
-              //   decoration: InputDecoration(labelText: 'ID Categoría'),
-              //   keyboardType: TextInputType.number,
-              //   validator: (value) {
-              //     if (value == null || value.isEmpty) {
-              //       return 'Por favor ingresa el ID de categoría';
-              //     }
-              //     return null;
-              //   },
-              // ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: selectedIconName,
+                decoration: InputDecoration(labelText: 'Ícono'),
+                items: IconsMapping.iconMap.entries.map((entry) {
+                  return DropdownMenuItem<String>(
+                    value: entry.key,
+                    child: Row(
+                      children: [
+                        Icon(entry.value),
+                        SizedBox(width: 8),
+                        Text(entry.key),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedIconName = value;
+                  });
+                },
+              ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveProveedor,

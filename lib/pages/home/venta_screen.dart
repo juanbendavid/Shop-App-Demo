@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/icons_mapping.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 import 'package:intl/intl.dart';
@@ -328,7 +329,15 @@ class _VentaScreenState extends State<VentaScreen> {
                     spacing: 8.0,
                     children: categoriasDisponibles.map((categoria) {
                       return ChoiceChip(
-                        label: Text(categoria.nombre),
+                        label: Row(
+                          children: [
+                            IconsMapping.iconMap[categoria.icono] != null
+                                ? Icon(IconsMapping.iconMap[categoria.icono])
+                                : const Icon(Icons.category),
+                            const SizedBox(width: 4),
+                            Text(categoria.nombre),
+                          ],
+                        ),
                         selected: filtroCategoria == categoria,
                         onSelected: (bool selected) {
                           setState(() {

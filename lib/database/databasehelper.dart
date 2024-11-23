@@ -29,7 +29,8 @@ class DatabaseHelper {
       await db.execute('''
         CREATE TABLE categorias (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          nombre TEXT NOT NULL
+          nombre TEXT NOT NULL,
+          icono TEXT NOT NULL
         )
       ''');
 
@@ -38,7 +39,8 @@ class DatabaseHelper {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           nombre TEXT NOT NULL,
           idCategoria INTEGER NOT NULL,
-          precioVenta INTEGER NOT NULL
+          precioVenta INTEGER NOT NULL,
+          imagen TEXT NULL
         )
       ''');
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/icons_mapping.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
 import 'package:frontend_parcial2/pages/categorias/categorias_form_screen.dart';
@@ -80,15 +81,18 @@ class _CategoriasListScreenState extends State<CategoriasListScreen> {
                 return ListTile(
                   title: Text(proveedor.nombre),
                   // subtitle: Text('Categoría: ${proveedor.idCategoria}'),
+                  leading: IconsMapping.iconMap[proveedor.icono] != null
+                      ? Icon(IconsMapping.iconMap[proveedor.icono])
+                      : null,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit),
+                        icon: const Icon(Icons.edit),
                         onPressed: () => showForm(proveedor),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete),
+                        icon: const Icon(Icons.delete),
                         onPressed: () => _deleteProveedor(proveedor.id!),
                       ),
                     ],
