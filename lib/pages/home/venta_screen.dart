@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:frontend_parcial2/config/google_maps_direction.dart';
 import 'package:frontend_parcial2/config/icons_mapping.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
 import 'package:frontend_parcial2/models/models.dart';
@@ -11,7 +14,7 @@ class VentaScreen extends StatefulWidget {
   State<VentaScreen> createState() => _VentaScreenState();
 }
 
-class _VentaScreenState extends State<VentaScreen> {
+class _VentaScreenState extends State<VentaScreen> with SingleTickerProviderStateMixin {
   List<Producto> productosDisponibles = [];
   List<Map<Producto, int>> carrito = [];
   String filtroNombre = '';
@@ -23,19 +26,32 @@ class _VentaScreenState extends State<VentaScreen> {
   TextEditingController cedulaController = TextEditingController();
   TextEditingController nombreController = TextEditingController();
   TextEditingController apellidoController = TextEditingController();
+  TextEditingController direccionController = TextEditingController();
 
   // Lista para mostrar clientes encontrados durante la búsqueda
   List<Cliente> clientesEncontrados = [];
   Cliente? clienteSeleccionado;
+  double? latitude;
+  double? longitude;
 
   // Lista de categorías disponibles para los chips
   List<Categoria> categoriasDisponibles = [];
+  late TabController tabController;
+
 
   @override
   void initState() {
     super.initState();
     _getProductos();
     _getCategorias();
+    tabController = TabController(length: 2, vsync: this); // Inicializarlo
+    tabController.addListener(() {
+      if (tabController.indexIsChanging) {
+        // Capturar el índice seleccionado
+        print('Tab seleccionado: ${tabController.index}');
+      }
+    });
+
   }
 
   void _getProductos() async {
@@ -192,6 +208,30 @@ class _VentaScreenState extends State<VentaScreen> {
                 controller: apellidoController,
                 decoration: const InputDecoration(labelText: 'Apellido'),
               ),
+              // switch para Delivery o pick up
+              // Row(
+              //   children: [
+              //     const Text('Delivery'),
+              //     Switch(
+              //       value: false,
+              //       onChanged: (value) {
+              //         // Implementar lógica para habilitar/deshabilitar campos de dirección
+              //       },
+              //     ),
+              //   ],
+              // ),
+               DefaultTabController(
+                length: 2,
+                child: TabBar(
+                  controller:tabController,
+                  onTap: (value) {
+                    print(value);
+                  },
+                  tabs: const [
+                  Tab(text: 'Pick up',),
+                  Tab(text: 'Delivery'),
+                ]),
+              ),
             ],
           ),
           actions: [
@@ -204,7 +244,7 @@ class _VentaScreenState extends State<VentaScreen> {
                 // Aquí debes manejar la lógica para guardar la venta y el cliente
                 // Implementa la lógica de almacenamiento en la base de datos
                 _guardarVenta(); // Llamar a la función para guardar la venta
-                Navigator.pop(context); // Cerrar el diálogo
+                // Navigator.pop(context); // Cerrar el diálogo
                 setState(() {
                   carrito
                       .clear(); // Vaciar el carrito después de finalizar la orden
@@ -220,23 +260,87 @@ class _VentaScreenState extends State<VentaScreen> {
 
   // Función para finalizar la orden y guardar la venta en la base de datos
   void _guardarVenta() async {
+    final carritoCopy = [...carrito];
+    print('Guardando venta...');
+    print(tabController.index);
+    bool? resultMap;
+    if (tabController.index == 1) {
+      print('Tab seleccionado: ${tabController.index}');
+      // abrir dialogo para ingresar dirección y mapa
+      // Navigator.pop(context); // Cerrar el diálogo del carrito
+      resultMap= await showModalBottomSheet<bool>(
+        enableDrag: true,
+        context: context,
+        isScrollControlled: true,
+        builder: (context) {
+          return FractionallySizedBox(
+            heightFactor: 0.95,
+            child: Container(
+              height: 500,
+              child: Column(
+                children: [
+                  const Text('Dirección de entrega'),
+                  const SizedBox(height: 10),
+                  GoogleMapsView(
+                    getDatosGeograficosCallBack: (double lat, double long, String calle1, String calle2) async{
+                    print('Latitud: $lat, Longitud: $long');
+                    print('Calle 1: $calle1, Calle 2: $calle2');
+                    latitude = long;
+                    longitude = lat;
+
+                  }),
+                  TextField(
+                    controller: direccionController,
+                    decoration: const InputDecoration(labelText: 'Dirección'),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (latitude == null || longitude == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Selecciona una ubicación en el mapa')),
+                        );
+                        return;
+                      }
+                      if (direccionController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ingresa una dirección')),
+                        );
+                        return;
+                      }
+                      Navigator.pop(context, true);
+                    },
+                    child: const Text('Guardar Orden'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+    }
+
+    if (resultMap != null && !resultMap) {
+      return;
+    }
     
     // Verificar que el carrito no esté vacío
-    if (carrito.isEmpty) {
+    if (carritoCopy.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('El carrito no puede estar vacío')),
       );
-      return;
     }
-    final carritoCopy = [...carrito];
+    
 
     // 1. Verificar si el cliente existe o crear uno nuevo
     String cedula = cedulaController.text;
     String nombre = nombreController.text;
     String apellido = apellidoController.text;
+    String direccion = direccionController.text;
 
     Cliente? clienteExistente;
-    var clientes = await dbHelper.getClientes(query: cedula);
+    var clientes = await  dbHelper.getClientes(query: cedula);
     if (clientes.isNotEmpty) {
       clienteExistente = clientes.first;
     } else {
@@ -261,6 +365,10 @@ class _VentaScreenState extends State<VentaScreen> {
       fecha: fechaActual,
       idCliente: clienteExistente.idCliente!,
       total: total,
+      tipoOperacion: tabController.index == 0 ? 'PICKUP' : 'DELIVERY',
+      latitude: tabController.index == 1? latitude:null,
+      longitude: tabController.index == 1? longitude:null,
+      direccion: tabController.index == 1? direccion:null,
     );
     int idVenta = await dbHelper.insertVenta(nuevaVenta);
 
@@ -276,6 +384,13 @@ class _VentaScreenState extends State<VentaScreen> {
       );
       await dbHelper.insertDetalleVenta(detalle);
     }
+    // Actualizar la cantidad de productos en la base de datos
+    for (var item in carritoCopy) {
+      final producto = item.keys.first;
+      final cantidad = item[producto] ?? 0;
+      producto.cantidadExistente -= cantidad;
+      await dbHelper.updateProducto(producto);
+    }
 
     // Mostrar mensaje de éxito y limpiar carrito
     ScaffoldMessenger.of(context).showSnackBar(
@@ -284,6 +399,9 @@ class _VentaScreenState extends State<VentaScreen> {
     setState(() {
       carrito.clear(); // Limpiar el carrito después de guardar la venta
     });
+    // if (tabController.index == 1) {
+      Navigator.pop(context); // Cerrar el diálogo
+    // }
   }
 
   // Cargar categorías disponibles desde la base de datos
@@ -297,6 +415,7 @@ class _VentaScreenState extends State<VentaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       floatingActionButton: FloatingActionButton(
         onPressed: _mostrarCarrito,
         child: const Icon(Icons.shopping_cart),
@@ -366,8 +485,23 @@ class _VentaScreenState extends State<VentaScreen> {
                   return Container(); // Ocultar productos que no coincidan con el filtro
                 }
                 return ListTile(
-                  title: Text(producto.nombre),
-                  subtitle: Text('Categoría: ${producto.idCategoria}'),
+                  title: Row(
+                    children: [
+                      producto.imagen != null
+                      ? Image.file(File(producto.imagen!), width: 55, height: 55, fit: BoxFit.cover)
+                      : const Icon(Icons.image),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold),),
+                          Text('Categoría: ${producto.idCategoria}'),
+                          Text('Cantidad: ${producto.cantidadExistente}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  // subtitle: Text('Categoría: ${producto.idCategoria}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -384,6 +518,8 @@ class _VentaScreenState extends State<VentaScreen> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () {
+                          final resuult = validarCantidadDisponible(producto, cantidadSeleccionada);
+                          if (!resuult) return;
                           _actualizarCantidad(
                               producto, cantidadSeleccionada + 1);
                         },
@@ -397,5 +533,16 @@ class _VentaScreenState extends State<VentaScreen> {
         ],
       ),
     );
+  }
+  
+  bool validarCantidadDisponible(Producto producto, int cantidadSeleccionada) {
+    if (cantidadSeleccionada >= producto.cantidadExistente) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay suficiente stock'), duration: Duration(milliseconds: 500),),
+      );
+      return false;
+    }else{
+      return true;
+    }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:frontend_parcial2/config/funciones.dart';
 import 'package:frontend_parcial2/database/databasehelper.dart';
@@ -106,21 +108,40 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
               itemBuilder: (context, index) {
                 final producto = productos[index];
                 return ListTile(
-                  title: Text(producto.nombre),
-                  subtitle: Text('Precio: Gs. ${formatNumber(producto.precioVenta)}'),
-                  trailing: Row(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      producto.imagen != null
+                      ? Image.file(File(producto.imagen!), width: 50, height: 50, fit: BoxFit.cover)
+                      : const Icon(Icons.image),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(producto.nombre, textAlign: TextAlign.start, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis,),
+                          Text('Precio: Gs. ${formatNumber(producto.precioVenta)}'),
+                          Text('Cantidad: ${producto.cantidadExistente}'),
+                        ],
+                      ),
+                      const Spacer(),
+                      Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit),
+                        icon: const Icon(Icons.edit),
                         onPressed: () => showForm(producto),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete),
+                        icon: const Icon(Icons.delete),
                         onPressed: () => _deleteProducto(producto.id!),
                       ),
                     ],
                   ),
+                    ],
+                  ),
+                  // subtitle: 
+                  // trailing: 
+                  
                 );
               },
             ),

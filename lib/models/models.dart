@@ -30,8 +30,9 @@ class Producto {
   int idCategoria;
   int precioVenta;
   String imagen;
+  int cantidadExistente;
 
-  Producto({this.id, required this.nombre, required this.idCategoria, required this.precioVenta, this.imagen = ''});
+  Producto({this.id, required this.nombre, required this.idCategoria, required this.precioVenta, this.imagen = '', this.cantidadExistente = 0});
 
   // Convertir a Map para operaciones CRUD
   Map<String, dynamic> toMap() {
@@ -41,6 +42,7 @@ class Producto {
       'idCategoria': idCategoria,
       'precioVenta': precioVenta,
       'imagen': imagen,
+      'cantidadExistente': cantidadExistente,
     };
   }
 
@@ -51,7 +53,8 @@ class Producto {
       nombre: map['nombre'],
       idCategoria: map['idCategoria'],
       precioVenta: map['precioVenta'],
-      imagen: map['imagen']
+      imagen: map['imagen'],
+      cantidadExistente: map['cantidadExistente'],
     );
   }
 }
@@ -87,8 +90,12 @@ class Venta {
   String fecha;
   int idCliente;
   int total;
+  String tipoOperacion;
+  double? latitude;
+  double? longitude;
+  String? direccion;
 
-  Venta({this.idVenta, required this.fecha, required this.idCliente, required this.total});
+  Venta({this.idVenta, required this.fecha, required this.idCliente, required this.total,required this.tipoOperacion, this.latitude, this.longitude, this.direccion});
 
   Map<String, dynamic> toMap() {
     return {
@@ -96,6 +103,10 @@ class Venta {
       'fecha': fecha,
       'idCliente': idCliente,
       'total': total,
+      'tipoOperacion': tipoOperacion,
+      'latitude': latitude?.toString(),
+      'longitude': longitude?.toString(),
+      'direccion': direccion,
     };
   }
 
@@ -105,6 +116,10 @@ class Venta {
       fecha: map['fecha'],
       idCliente: map['idCliente'],
       total: map['total'],
+      tipoOperacion: map['tipoOperacion'],
+      latitude: map['latitude']!=null? double.parse(map['latitude']):null,
+      longitude: map['longitude']!=null? double.parse(map['longitude']):null,
+      direccion: map['direccion'],
     );
   }
 }

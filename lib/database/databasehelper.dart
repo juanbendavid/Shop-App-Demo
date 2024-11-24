@@ -19,7 +19,7 @@ class DatabaseHelper {
 
   Future<Database> initDb() async {
     // primero eliminar la base de datos si existe
-    // await deleteDb();
+    await deleteDb();
 
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'proveedores.db');
@@ -40,6 +40,7 @@ class DatabaseHelper {
           nombre TEXT NOT NULL,
           idCategoria INTEGER NOT NULL,
           precioVenta INTEGER NOT NULL,
+          cantidadExistente INTEGER NOT NULL,
           imagen TEXT NULL
         )
       ''');
@@ -59,6 +60,10 @@ class DatabaseHelper {
           fecha TEXT NOT NULL,
           idCliente INTEGER NOT NULL,
           total INTEGER NOT NULL,
+          tipoOperacion TEXT NOT NULL,
+          latitude TEXT,
+          longitude TEXT,
+          direccion TEXT,
           FOREIGN KEY (idCliente) REFERENCES Cliente(idCliente)
         )
       ''');
