@@ -143,6 +143,15 @@ class ConsultaVentaDetallesScreen extends StatelessWidget {
                   },
                 ),
               ),
+              if (venta.tipoOperacion == "DELIVERY")
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text('Dirección de entrega: ${venta.direccion}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
               if (venta.tipoOperacion == 'DELIVERY')
                 GoogleMapsView(
                   ventaPosition: CameraPosition(
@@ -152,7 +161,8 @@ class ConsultaVentaDetallesScreen extends StatelessWidget {
                   getDatosGeograficosCallBack: (coordenadaX, coordenadaY, calle1, calle2) async {
                     print('Coordenadas: $coordenadaX, $coordenadaY');
                   },
-                )
+                ),
+              
             ],
           );
         },

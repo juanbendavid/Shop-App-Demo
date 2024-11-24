@@ -95,18 +95,15 @@ class _ConsultaVentaScreenState extends State<ConsultaVentaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Consulta de Ventas'),
-        bottom: TabBar(
+      body: Column(
+        children: [
+          TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Pickup'),
             Tab(text: 'Delivery'),
           ],
         ),
-      ),
-      body: Column(
-        children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
