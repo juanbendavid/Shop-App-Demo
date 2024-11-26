@@ -19,7 +19,7 @@ class DatabaseHelper {
 
   Future<Database> initDb() async {
     // primero eliminar la base de datos si existe
-    await deleteDb();
+    // await deleteDb();
 
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'proveedores.db');
